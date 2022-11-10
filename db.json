@@ -1,0 +1,62 @@
+{
+  "folders": [
+    {
+      "name": "Java",
+      "parentId": null,
+      "isOpen": false,
+      "isSystem": false,
+      "defaultLanguage": "plain_text",
+      "id": "7TOERP_U",
+      "createdAt": 1668094269381,
+      "updatedAt": 1668094276048
+    }
+  ],
+  "snippets": [
+    {
+      "isDeleted": false,
+      "isFavorites": false,
+      "folderId": "7TOERP_U",
+      "tagsIds": [
+        "DJ2cQnwY",
+        "qXPQeyFf"
+      ],
+      "description": null,
+      "name": "PBKDF2 salted password hashing",
+      "content": [
+        {
+          "label": "utils",
+          "language": "java",
+          "value": "import java.security.SecureRandom;\nimport javax.crypto.spec.PBEKeySpec;\nimport javax.crypto.SecretKeyFactory;\nimport java.math.BigInteger;\nimport java.security.NoSuchAlgorithmException;\nimport java.security.spec.InvalidKeySpecException;\n\n/*\n * PBKDF2 salted password hashing.\n * Author: havoc AT defuse.ca\n * http://crackstation.net/hashing-security.htm\n */\npublic class PasswordHash\n{\n    public static final String PBKDF2_ALGORITHM = \"PBKDF2WithHmacSHA1\";\n\n    // The following constants may be changed without breaking existing hashes.\n    public static final int SALT_BYTES = 24;\n    public static final int HASH_BYTES = 24;\n    public static final int PBKDF2_ITERATIONS = 1000;\n\n    public static final int ITERATION_INDEX = 0;\n    public static final int SALT_INDEX = 1;\n    public static final int PBKDF2_INDEX = 2;\n\n    /**\n     * Returns a salted PBKDF2 hash of the password.\n     *\n     * @param   password    the password to hash\n     * @return              a salted PBKDF2 hash of the password\n     */\n    public static String createHash(String password)\n            throws NoSuchAlgorithmException, InvalidKeySpecException\n    {\n        return createHash(password.toCharArray());\n    }\n\n    /**\n     * Returns a salted PBKDF2 hash of the password.\n     *\n     * @param   password    the password to hash\n     * @return              a salted PBKDF2 hash of the password\n     */\n    public static String createHash(char[] password)\n            throws NoSuchAlgorithmException, InvalidKeySpecException\n    {\n        // Generate a random salt\n        SecureRandom random = new SecureRandom();\n        byte[] salt = new byte[SALT_BYTES];\n        random.nextBytes(salt);\n\n        // Hash the password\n        byte[] hash = pbkdf2(password, salt, PBKDF2_ITERATIONS, HASH_BYTES);\n        // format iterations:salt:hash\n        return PBKDF2_ITERATIONS + \":\" + toHex(salt) + \":\" +  toHex(hash);\n    }\n\n    /**\n     * Validates a password using a hash.\n     *\n     * @param   password    the password to check\n     * @param   goodHash    the hash of the valid password\n     * @return              true if the password is correct, false if not\n     */\n    public static boolean validatePassword(String password, String goodHash)\n            throws NoSuchAlgorithmException, InvalidKeySpecException\n    {\n        return validatePassword(password.toCharArray(), goodHash);\n    }\n\n    /**\n     * Validates a password using a hash.\n     *\n     * @param   password    the password to check\n     * @param   goodHash    the hash of the valid password\n     * @return              true if the password is correct, false if not\n     */\n    public static boolean validatePassword(char[] password, String goodHash)\n            throws NoSuchAlgorithmException, InvalidKeySpecException\n    {\n        // Decode the hash into its parameters\n        String[] params = goodHash.split(\":\");\n        int iterations = Integer.parseInt(params[ITERATION_INDEX]);\n        byte[] salt = fromHex(params[SALT_INDEX]);\n        byte[] hash = fromHex(params[PBKDF2_INDEX]);\n        // Compute the hash of the provided password, using the same salt,\n        // iteration count, and hash length\n        byte[] testHash = pbkdf2(password, salt, iterations, hash.length);\n        // Compare the hashes in constant time. The password is correct if\n        // both hashes match.\n        return slowEquals(hash, testHash);\n    }\n\n    /**\n     * Compares two byte arrays in length-constant time. This comparison method\n     * is used so that password hashes cannot be extracted from an on-line\n     * system using a timing attack and then attacked off-line.\n     *\n     * @param   a       the first byte array\n     * @param   b       the second byte array\n     * @return          true if both byte arrays are the same, false if not\n     */\n    private static boolean slowEquals(byte[] a, byte[] b)\n    {\n        int diff = a.length ^ b.length;\n        for(int i = 0; i < a.length && i < b.length; i++)\n            diff |= a[i] ^ b[i];\n        return diff == 0;\n    }\n\n    /**\n     *  Computes the PBKDF2 hash of a password.\n     *\n     * @param   password    the password to hash.\n     * @param   salt        the salt\n     * @param   iterations  the iteration count (slowness factor)\n     * @param   bytes       the length of the hash to compute in bytes\n     * @return              the PBDKF2 hash of the password\n     */\n    private static byte[] pbkdf2(char[] password, byte[] salt, int iterations, int bytes)\n            throws NoSuchAlgorithmException, InvalidKeySpecException\n    {\n        PBEKeySpec spec = new PBEKeySpec(password, salt, iterations, bytes * 8);\n        SecretKeyFactory skf = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM);\n        return skf.generateSecret(spec).getEncoded();\n    }\n\n    /**\n     * Converts a string of hexadecimal characters into a byte array.\n     *\n     * @param   hex         the hex string\n     * @return              the hex string decoded into a byte array\n     */\n    private static byte[] fromHex(String hex)\n    {\n        byte[] binary = new byte[hex.length() / 2];\n        for(int i = 0; i < binary.length; i++)\n        {\n            binary[i] = (byte)Integer.parseInt(hex.substring(2*i, 2*i+2), 16);\n        }\n        return binary;\n    }\n\n    /**\n     * Converts a byte array into a hexadecimal string.\n     *\n     * @param   array       the byte array to convert\n     * @return              a length*2 character string encoding the byte array\n     */\n    private static String toHex(byte[] array)\n    {\n        BigInteger bi = new BigInteger(1, array);\n        String hex = bi.toString(16);\n        int paddingLength = (array.length * 2) - hex.length();\n        if(paddingLength > 0)\n            return String.format(\"%0\" + paddingLength + \"d\", 0) + hex;\n        else\n            return hex;\n    }\n}"
+        },
+        {
+          "label": "test",
+          "language": "plain_text",
+          "value": "    /**\n     * Tests the basic functionality of the PasswordHash class\n     *\n     * @param   args        ignored\n     */\n    public static void main(String[] args)\n    {\n        try\n        {\n            // Print out 10 hashes\n            for(int i = 0; i < 10; i++)\n                System.out.println(PasswordHash.createHash(\"passw0Rd!\"));\n\n            // Test password validation\n            boolean failure = false;\n            System.out.println(\"Running tests...\");\n            for(int i = 0; i < 100; i++)\n            {\n                String password = \"\"+i;\n                String hash = createHash(password);\n                String secondHash = createHash(password);\n                if(hash.equals(secondHash)) {\n                    System.out.println(\"FAILURE: TWO HASHES ARE EQUAL!\");\n                    failure = true;\n                }\n                String wrongPassword = \"\"+(i+1);\n                if(validatePassword(wrongPassword, hash)) {\n                    System.out.println(\"FAILURE: WRONG PASSWORD ACCEPTED!\");\n                    failure = true;\n                }\n                if(!validatePassword(password, hash)) {\n                    System.out.println(\"FAILURE: GOOD PASSWORD NOT ACCEPTED!\");\n                    failure = true;\n                }\n            }\n            if(failure)\n                System.out.println(\"TESTS FAILED!\");\n            else\n                System.out.println(\"TESTS PASSED!\");\n        }\n        catch(Exception ex)\n        {\n            System.out.println(\"ERROR: \" + ex);\n        }\n    }"
+        }
+      ],
+      "id": "_y8h7OOT",
+      "createdAt": 1668094290191,
+      "updatedAt": 1668106329878
+    }
+  ],
+  "tags": [
+    {
+      "name": "java",
+      "id": "PZBCbQY2",
+      "createdAt": 1668094583514,
+      "updatedAt": 1668094583514
+    },
+    {
+      "name": "Java",
+      "id": "DJ2cQnwY",
+      "createdAt": 1668094592835,
+      "updatedAt": 1668094592835
+    },
+    {
+      "name": "Salted Password Hashing",
+      "id": "qXPQeyFf",
+      "createdAt": 1668106307063,
+      "updatedAt": 1668106307063
+    }
+  ]
+}
