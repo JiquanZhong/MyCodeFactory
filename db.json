@@ -37,6 +37,66 @@
       "id": "_y8h7OOT",
       "createdAt": 1668094290191,
       "updatedAt": 1668106329878
+    },
+    {
+      "isDeleted": false,
+      "isFavorites": false,
+      "folderId": "",
+      "tagsIds": [],
+      "description": null,
+      "name": "Untitled snippet",
+      "content": [
+        {
+          "label": "Fragment 1",
+          "language": "plain_text",
+          "value": ""
+        }
+      ],
+      "id": "vmfwbPlB",
+      "createdAt": 1668210610522,
+      "updatedAt": 1668210610522
+    },
+    {
+      "isDeleted": false,
+      "isFavorites": false,
+      "folderId": "7TOERP_U",
+      "tagsIds": [
+        "DJ2cQnwY",
+        "a34fn97b",
+        "94OXK5Y3"
+      ],
+      "description": null,
+      "name": "MyBatis",
+      "content": [
+        {
+          "label": "mybatis-config.xml",
+          "language": "xml",
+          "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<!DOCTYPE configuration\n        PUBLIC \"-//mybatis.org//DTD Config 3.0//EN\"\n        \"http://mybatis.org/dtd/mybatis-3-config.dtd\">\n<configuration>\n\n    <!--read external db resource xml file-->\n    <properties resource=\"db.properties\"></properties>\n    \n    <!--set the Alias for a class-->\n    <typeAliases>\n        <typeAlias type=\"com.kuang.pojo.User\" alias=\"User\"/>\n    </typeAliases>\n    \n    <environments default=\"development\">\n        <environment id=\"development\">\n            <transactionManager type=\"JDBC\"/>\n            <!--定义数据池的数据源-->\n            <dataSource type=\"POOLED\">\n                <property name=\"driver\" value=\"${driver}\"/>\n                <property name=\"url\" value=\"${url}\"/>\n                <property name=\"username\" value=\"${username}\"/>\n                <property name=\"password\" value=\"${password}\"/>\n            </dataSource>\n        </environment>\n    </environments>\n    \n    <!--set sql Mapping xml file-->\n    <mappers>\n        <mapper resource=\"com/kuang/builder/userMapper.xml\"/>\n    </mappers>\n</configuration>"
+        },
+        {
+          "label": "mapper.xml",
+          "language": "xml",
+          "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<!DOCTYPE mapper\n        PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\"\n        \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">\n<mapper namespace=\"com.kuang.dao.UserMapper\">\n    <select id=\"selectUser\" resultType=\"com.kuang.pojo.User\">\n        select * from user\n    </select>\n    \n    <select id=\"selectById\" resultType=\"com.kuang.pojo.User\">\n        select * from user where id = #{id}\n    </select>\n\n    <select id=\"selectByNP\" resultType=\"com.kuang.pojo.User\">\n        select * from user where name = #{username} and pwd = #{pwd}\n    </select>\n\n    <select id=\"selectByNP2\" parameterType=\"map\"  resultType=\"com.kuang.pojo.User\">\n        select * from user where name = #{username} and pwd = #{pwd}\n    </select>\n\n    <select id=\"addUser\" parameterType=\"com.kuang.pojo.User\">\n        insert into user(id,name,pwd) values(#{id}, #{name}, #{pwd})\n    </select>\n</mapper>"
+        },
+        {
+          "label": "UserMapper",
+          "language": "plain_text",
+          "value": "package com.kuang.dao;\n\nimport com.kuang.pojo.User;\nimport org.apache.ibatis.annotations.Param;\n\nimport java.util.List;\nimport java.util.Map;\n\n/**\n * @author ZHONG Jiquan\n * @create 08/11/2022 - 16:27\n */\npublic interface UserMapper {\n    List<User> selectUser();\n    User selectById(int id);\n    User selectByNP(@Param(\"username\") String username, @Param(\"pwd\") String pwd);\n    User selectByNP2(Map<String,Object> map);\n    void addUser(User user);\n}\n"
+        },
+        {
+          "label": "MybatisUtils",
+          "language": "java",
+          "value": "package com.kuang.utils;\n\nimport org.apache.ibatis.io.Resources;\nimport org.apache.ibatis.session.SqlSession;\nimport org.apache.ibatis.session.SqlSessionFactory;\nimport org.apache.ibatis.session.SqlSessionFactoryBuilder;\nimport org.junit.jupiter.api.Test;\n\nimport java.io.IOException;\nimport java.io.InputStream;\n\n/**\n * @author ZHONG Jiquan\n * @create 08/11/2022 - 16:19\n */\npublic class MybatisUtils {\n    private static SqlSessionFactory sqlSessionFactory;\n\n\t\t//JVM启动时，先静态加载mybatis-config.xml文件，并创建好sqlSessionFactory\n    static {\n        try {\n            String resource = \"mybatis-config.xml\";\n            InputStream inputStream = Resources.getResourceAsStream(resource);\n            sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);\n        }catch (IOException e){\n            e.printStackTrace();\n        }\n    }\n\n    //获取sql的Session连接\n    public static SqlSession getSession(){\n        return sqlSessionFactory.openSession();\n    }\n\n\t\t\n    @Test\n    public void test1() {\n    \t\t//创建数据库会话\n        SqlSession sqlSession = MybatisUtils.getSession();\n\t\t\t\t\n        //定义映射类\n        UserMapper mapper = sqlSession.getMapper(UserMapper.class);\n        //调用映射方法，得到返回结果\n        List<User> users = mapper.selectUser();\n        for (User user : users){\n            System.out.println(user);\n        }\n        sqlSession.close();\n    }\n}\n"
+        },
+        {
+          "label": "db.properties",
+          "language": "properties",
+          "value": "driver=com.mysql.cj.jdbc.Driver\nurl=jdbc:mysql://localhost:3306/mybatis?serverTimezone=Europe/Paris&characterEncoding=utf8&useSSL=true&useUnicode=true\nusername=root\npassword=zxc15089860528"
+        }
+      ],
+      "id": "ZnzAVXCN",
+      "createdAt": 1668210615092,
+      "updatedAt": 1668220137230
     }
   ],
   "tags": [
@@ -57,6 +117,18 @@
       "id": "qXPQeyFf",
       "createdAt": 1668106307063,
       "updatedAt": 1668106307063
+    },
+    {
+      "name": "JDBC",
+      "id": "a34fn97b",
+      "createdAt": 1668210671223,
+      "updatedAt": 1668210671223
+    },
+    {
+      "name": "MyBatis",
+      "id": "94OXK5Y3",
+      "createdAt": 1668210876701,
+      "updatedAt": 1668210876701
     }
   ]
 }
